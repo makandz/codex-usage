@@ -10,10 +10,12 @@ Requires Node.js 24.12+ and pnpm. Install dependencies with `pnpm install`, then
 pnpm start
 ```
 
-The first launch builds the app. Later launches rebuild only when source files change. A Node server opens your browser at `http://127.0.0.1:4318`. Stop it with `Ctrl+C`; closing the browser doesn't stop the server. No background service is installed.
+The first launch builds the app. Later launches rebuild only when source files change. Each run imports usage, replaces `dashboard.html` beside the SQLite database, opens it in your browser, and exits. No server or background task stays running.
+
+The dashboard is a self-contained snapshot. All date ranges, charts, and breakdowns work offline, including after a browser refresh. Run `pnpm start` again to import newer usage and regenerate it. Existing tabs show their previous snapshot until refreshed.
 
 ```sh
-pnpm start --no-open  # Print the URL without opening a browser
+pnpm start --no-open  # Generate the snapshot without opening a browser
 pnpm run check       # Type check
 pnpm test            # Parser, persistence, pricing, and reporting tests
 pnpm run build       # Type check and build without starting a server
@@ -21,7 +23,7 @@ pnpm run build       # Type check and build without starting a server
 
 ## History and storage
 
-On startup and when you click Refresh, the app scans `$CODEX_HOME/sessions` and `$CODEX_HOME/archived_sessions` (default `~/.codex`). Only usage metadata is imported, not prompts, code, credentials, or tool output. Symlinks are not followed.
+On each run, the app scans `$CODEX_HOME/sessions` and `$CODEX_HOME/archived_sessions` (default `~/.codex`). Only usage metadata is imported, not prompts, code, credentials, or tool output. Symlinks are not followed.
 
 SQLite stores usage, calculated prices, and per-file checkpoints in:
 
@@ -30,7 +32,7 @@ SQLite stores usage, calculated prices, and per-file checkpoints in:
 
 Unchanged files are skipped; appended files resume at the last complete line. Request identities prevent duplicates when sessions move into the archive or logs are copied. Imported records remain when source logs are deleted or truncated. Sessions deleted before their first import cannot be recovered. Back up the data directory to preserve imported history, including records whose logs are gone.
 
-Override `CODEX_HOME`, `CODEX_USAGE_DATA_DIR`, or `PORT` when launching if needed. Data stays on your computer; the app binds to the loopback interface and doesn't make external requests. The terminal must remain open while you use the dashboard.
+Override `CODEX_HOME` or `CODEX_USAGE_DATA_DIR` when launching if needed. Data stays on your computer; the dashboard doesn't make external requests. The generated HTML contains usage summaries, so treat it as private if sharing files. You can close the terminal once the command finishes.
 
 ## Estimates
 

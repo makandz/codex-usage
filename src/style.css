@@ -33,7 +33,6 @@ main { max-width: 1260px; padding: 16px 28px 20px; margin: auto; }
 h1 { font-size: 14px; font-weight: 550; letter-spacing: -.3px; }
 .heading-status { display: flex; align-items: center; gap: 7px; font-size: 10px; color: var(--faint); padding-bottom: 3px; white-space: nowrap; }
 .status-dot { width: 5px; height: 5px; border-radius: 50%; background: #69707f; }
-.status-dot.active { background: var(--accent); box-shadow: 0 0 8px #b6b9fc44; }
 .toolbar { display: flex; justify-content: space-between; align-items: center; margin-top: 0; padding-bottom: 12px; border-bottom: 1px solid var(--line); gap: 16px; }
 .segmented { display: inline-flex; padding: 3px; gap: 2px; border-radius: 9px; background: #15171d; border: 1px solid #20232b; }
 .segmented button { background: transparent; color: var(--muted); padding: 6px 12px; font-size: 11px; border: 1px solid transparent; border-radius: 6px; white-space: nowrap; }
@@ -41,8 +40,6 @@ h1 { font-size: 14px; font-weight: 550; letter-spacing: -.3px; }
 .segmented button.selected { color: #f1f1fa; background: #292c36; border-color: #363a46; box-shadow: 0 1px 3px #0005; }
 .metric-control button { padding-left: 20px; padding-right: 20px; }
 .range-controls { display: flex; align-items: center; gap: 12px; }
-.icon-button { height: 33px; width: 33px; display: grid; place-items: center; color: var(--muted); border-radius: 7px; background: none; border: 1px solid transparent; }
-.icon-button:hover:not(:disabled) { color: #fff; background: #20232b; border-color: #333744; }
 .overview { display: grid; grid-template-columns: minmax(220px, .75fr) minmax(0, 1.75fr); gap: 36px; padding: 20px 0; }
 .hero-summary { padding-top: 9px; }
 .summary-caption { font-size: 9px; color: var(--muted); letter-spacing: 1.6px; font-weight: 550; margin-bottom: 10px; }
@@ -55,7 +52,6 @@ h1 { font-size: 14px; font-weight: 550; letter-spacing: -.3px; }
 .chart-heading h2 { font-size: 12px; font-weight: 450; }
 .chart-heading > span { font-size: 8px; letter-spacing: 1.1px; color: var(--faint); }
 .chart { width: 100%; height: clamp(150px, 23vh, 205px); font-variant-numeric: tabular-nums; }
-.chart-loading { height: clamp(150px, 23vh, 205px); display: grid; place-items: center; color: var(--faint); font-size: 12px; }
 .chart-tooltip { padding: 12px 16px; min-width: 115px; background: #20232c; border: 1px solid #3c4051; border-radius: 8px; box-shadow: 0 5px 25px #0004; }
 .chart-tooltip span { display: block; font-size: 10px; color: #a0a6b6; margin-bottom: 7px; }
 .chart-tooltip strong { display: block; font-size: 17px; color: #e9eaf0; font-weight: 500; }
@@ -114,10 +110,6 @@ tbody tr:hover { background: #ffffff02; }
 .notice { padding: 12px 15px; margin-top: 18px; color: #b8ac98; background: #201d18; border: 1px solid #3a3327; font-size: 11px; line-height: 1.6; border-radius: 8px; }
 .notice ul { padding-left: 18px; overflow-wrap: anywhere; }
 .notice.error { color: #e5acac; background: #241b1f; border-color: #453039; }
-.notice button { background: transparent; border: 0; text-decoration: underline; margin-left: 8px; padding: 0; }
-.placeholder { color: #5c6073; }
-.spin { animation: rotate 1.5s linear infinite; }
-@keyframes rotate { to { transform: rotate(360deg); } }
 @media (max-width: 850px) {
   main { padding: 16px 24px 20px; }
   .overview { grid-template-columns: minmax(200px, .8fr) minmax(0, 1.4fr); gap: 25px; }

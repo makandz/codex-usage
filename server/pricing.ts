@@ -1,16 +1,16 @@
-export interface TokenUsage {
+export type TokenUsage = {
   input: number;
   cached: number;
   write: number;
   output: number;
-}
+};
 
-export interface Price {
+export type Price = {
   inputCost: number;
   cachedCost: number;
   outputCost: number;
   savings: number;
-}
+};
 
 // Base API rates per million tokens, verified 2026-10-25. No long-context uplift.
 // https://developers.openai.com/api/docs/models/gpt-6.1-sol
