@@ -46,15 +46,20 @@ export function priceUsage(model: string, tier: string | null, usage: TokenUsage
   if (model === 'codex-auto-review') {
     return { inputCost: 0, cachedCost: 0, outputCost: 0, savings: 0 };
   }
+
   const rate = rates[model];
+
   // Logs don't specify the cache-write TTL needed to choose a rate.
   if (!rate || usage.write > 0) {
     return null;
   }
+
   const speed = tier === null ? 1 : tierMultipliers[tier];
+
   if (typeof speed !== 'number') {
     return null;
   }
+
   const multiplier = speed / 1_000_000;
   return {
     inputCost: (usage.input - usage.cached) * rate.input * multiplier,

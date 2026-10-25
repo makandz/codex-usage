@@ -11,9 +11,11 @@ function runTool(executable, args) {
     cwd: root,
     stdio: 'inherit',
   });
+
   if (result.error) {
     throw result.error;
   }
+
   if (result.status !== 0) {
     process.exit(result.status ?? 1);
   }
@@ -25,16 +27,19 @@ async function inlineAssets() {
   const filename = join(dist, 'index.html');
   let html = await readFile(filename, 'utf8');
 
+  // Replacement callbacks preserve literal dollar sequences in bundled asset contents.
   for (const match of html.matchAll(/<script\b[^>]*\bsrc="([^"]+)"[^>]*><\/script>/g)) {
     const script = await readFile(join(dist, match[1]), 'utf8');
     const escaped = script.replace(/<\/script/gi, '<\\/script');
     html = html.replace(match[0], () => `<script type="module">${escaped}</script>`);
   }
+
   for (const match of html.matchAll(/<link\b[^>]*\brel="stylesheet"[^>]*\bhref="([^"]+)"[^>]*>/g)) {
     const css = await readFile(join(dist, match[1]), 'utf8');
     const escaped = css.replace(/<\/style/gi, '<\\/style');
     html = html.replace(match[0], () => `<style>${escaped}</style>`);
   }
+
   const favicon = await readFile(join(dist, 'favicon.svg'));
   html = html.replace('/favicon.svg', `data:image/svg+xml;base64,${favicon.toString('base64')}`);
   await writeFile(filename, html);

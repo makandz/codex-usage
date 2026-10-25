@@ -42,6 +42,7 @@ export default function UsageChart({ report, metric }: UsageChartProps) {
     if (!active || !payload.length) {
       return null;
     }
+
     const point = report.series.find(point => point.timestamp === label);
     return point ? <UsageTooltip point={point} metric={metric} hourly={hourly} /> : null;
   }

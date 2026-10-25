@@ -9,9 +9,11 @@ process.chdir(root);
 /** Find the latest modification in a file or source directory. */
 async function latestModification(path) {
   const info = await stat(path);
+
   if (!info.isDirectory()) {
     return info.mtimeMs;
   }
+
   const children = await readdir(path);
   const timestamps = await Promise.all(children.map(child => latestModification(join(path, child))));
   return Math.max(info.mtimeMs, ...timestamps);
@@ -32,6 +34,7 @@ async function runBuild() {
 /** Rebuild on first launch or when sources are newer than either build output. */
 async function buildIfNeeded() {
   let built = 0;
+
   try {
     const frontend = await stat('dist/index.html');
     const backend = await stat('build/server/index.js');
@@ -39,6 +42,7 @@ async function buildIfNeeded() {
   } catch {
     // Missing build output is expected on the first launch.
   }
+
   const sources = [
     'src',
     'server',
@@ -52,11 +56,14 @@ async function buildIfNeeded() {
     'tsconfig.server.json',
   ];
   const timestamps = await Promise.all(sources.map(latestModification));
+
   if (Math.max(...timestamps) <= built) {
     return;
   }
+
   console.log('Building Codex Usage…');
   const code = await runBuild();
+
   if (code !== 0) {
     process.exit(typeof code === 'number' ? code : 1);
   }

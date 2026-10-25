@@ -7,6 +7,7 @@ import { fixture, header, ledger, line } from './fixtures.ts';
 
 test('snapshots embed every date range and safely preserve HTML in log metadata', async () => {
   const context = await fixture();
+
   try {
     const model = '</script><script>alert("usage")</script> $&';
     await writeFile(context.file, header() + ledger('older', '2026-10-10T16:00:00Z')

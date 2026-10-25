@@ -16,9 +16,11 @@ export function chartPoints(series: UsageReport['series'], metric: Metric): Char
   return series.map(point => {
     const unpriced = metric === 'cost' && !hasPrice(point);
     let value: number | null = point.tokens;
+
     if (metric === 'cost') {
       value = unpriced ? null : point.cost;
     }
+
     return {
       ...point,
       value,

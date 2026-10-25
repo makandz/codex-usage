@@ -73,15 +73,19 @@ export function legacy(total = usage, time = timestamp): string {
 export function parseEvents(transcript: string): UsageEvent[] {
   const state = initialState('test');
   const events = new Map<string, UsageEvent>();
+
   for (const row of transcript.trim().split('\n')) {
     const result = parseLine(row, state);
+
     if (result.replace) {
       events.delete(result.replace);
     }
+
     if (result.event) {
       events.set(result.event.id, result.event);
     }
   }
+
   return [...events.values()];
 }
 

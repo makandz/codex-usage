@@ -61,6 +61,7 @@ export class UsageStore {
       );
       CREATE INDEX IF NOT EXISTS usage_timestamp ON usage(timestamp);
     `);
+
     if (this.metadata('pricingVersion') !== PRICING_VERSION) {
       this.repriceHistory();
     }
@@ -92,9 +93,11 @@ export class UsageStore {
    */
   file(path: string): SavedFile | null {
     const row = this.db.prepare('SELECT * FROM files WHERE path = ?').get(path);
+
     if (!row) {
       return null;
     }
+
     return {
       identity: String(row.identity),
       mtime: Number(row.mtime),
@@ -197,10 +200,12 @@ export class UsageStore {
   /** Recalculate saved prices atomically without requiring the original logs. */
   private repriceHistory(): void {
     this.db.exec('BEGIN IMMEDIATE');
+
     try {
       for (const event of this.events()) {
         this.saveEvent(event);
       }
+
       this.setMetadata('pricingVersion', PRICING_VERSION);
       this.db.exec('COMMIT');
     } catch (error) {
@@ -213,6 +218,7 @@ export class UsageStore {
 /** Convert SQLite values into the domain representation used by reports. */
 function readEvent(row: Row): SavedEvent {
   let price: Price | null = null;
+
   if (row.inputCost !== null) {
     price = {
       inputCost: Number(row.inputCost),
@@ -221,6 +227,7 @@ function readEvent(row: Row): SavedEvent {
       savings: Number(row.savings),
     };
   }
+
   return {
     id: String(row.id),
     session: String(row.session),

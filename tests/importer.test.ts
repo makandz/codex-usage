@@ -7,6 +7,7 @@ import { fixture, header, ledger, legacy } from './fixtures.ts';
 
 test('incremental imports survive archive moves, copies, deletion, and database reopening', async () => {
   const context = await fixture();
+
   try {
     await writeFile(context.file, header() + ledger() + legacy());
     await context.importer.refresh();
@@ -37,6 +38,7 @@ test('incremental imports survive archive moves, copies, deletion, and database 
 
 test('partial UTF-8 lines and mirrors split across imports resume without duplication', async () => {
   const context = await fixture();
+
   try {
     const tail = Buffer.from(ledger('café'));
     const cut = tail.indexOf(Buffer.from('é')) + 1;
@@ -54,6 +56,7 @@ test('partial UTF-8 lines and mirrors split across imports resume without duplic
 
 test('truncation, malformed lines, and replaced logs retain already imported history', async () => {
   const context = await fixture();
+
   try {
     await writeFile(context.file, header() + ledger());
     await context.importer.refresh();
@@ -71,6 +74,7 @@ test('truncation, malformed lines, and replaced logs retain already imported his
 
 test('oversized complete lines are skipped without losing the next record or checkpoint', async () => {
   const context = await fixture();
+
   try {
     const oversized = 'x'.repeat(16 * 1024 * 1024 + 1);
     await writeFile(context.file, header() + oversized + '\n' + ledger());
@@ -91,6 +95,7 @@ test('oversized complete lines are skipped without losing the next record or che
 
 test('an unfinished oversized line rolls back usage and checkpoints until it can be retried', async () => {
   const context = await fixture();
+
   try {
     await writeFile(context.file, header() + ledger() + 'x'.repeat(16 * 1024 * 1024 + 1));
     await context.importer.refresh();
@@ -111,6 +116,7 @@ test('an unfinished oversized line rolls back usage and checkpoints until it can
 
 test('concurrent refresh calls share one scan', async () => {
   const context = await fixture();
+
   try {
     await writeFile(context.file, header() + ledger());
     const first = context.importer.refresh();

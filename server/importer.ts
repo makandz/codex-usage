@@ -42,6 +42,7 @@ export class Importer {
     if (this.current) {
       return this.current;
     }
+
     this.status = {
       ...this.status,
       scanning: true,
@@ -66,9 +67,11 @@ export class Importer {
   /** Import discovered logs in a stable order, retaining readable per-file failures. */
   private async scan(): Promise<void> {
     const files: string[] = [];
+
     for (const root of ['sessions', 'archived_sessions']) {
       await discover(join(this.home, root), files);
     }
+
     this.status.totalFiles = files.length;
 
     for (const file of files.sort()) {
@@ -78,11 +81,14 @@ export class Importer {
         const reason = error instanceof Error ? error.message : 'unknown error';
         this.warn(`Could not read ${basename(file)}: ${reason}`);
       }
+
       this.status.scannedFiles++;
     }
+
     if (!files.length) {
       this.warn('No session logs found. Previously imported usage is still available.');
     }
+
     this.status.lastScan = new Date().toISOString();
     this.store.setMetadata('lastScan', this.status.lastScan);
   }
@@ -98,6 +104,8 @@ export class Importer {
       this.status.skippedFiles++;
       return;
     }
+
+    // Resume only when the log grew and the bytes before its checkpoint still match.
     const canResume = sameFile
       && metadata.size > saved.size
       && saved.offset <= metadata.size
@@ -108,27 +116,35 @@ export class Importer {
     let invalid = 0;
 
     this.store.db.exec('BEGIN IMMEDIATE');
+
     try {
       for await (const line of readLogLines(path, offset, metadata.size)) {
         offset = line.offset;
+
         if (line.text === null) {
           invalid++;
           continue;
         }
+
         if (line.text.length === 0) {
           continue;
         }
+
         const result = parseLine(line.text, state);
+
         if (result.invalid) {
           invalid++;
         }
+
         if (result.replace) {
           this.store.removeMirror(result.replace);
         }
+
         if (result.event && this.store.saveEvent(result.event)) {
           imported++;
         }
       }
+
       this.store.saveFile(path, {
         identity,
         size: metadata.size,
@@ -144,6 +160,7 @@ export class Importer {
     }
 
     this.status.imported += imported;
+
     if (invalid) {
       this.warn(`${basename(path)}: skipped ${invalid} invalid or oversized log lines.`);
     }
@@ -160,16 +177,20 @@ export class Importer {
 /** Discover JSONL files recursively without following directory or file symlinks. */
 async function discover(directory: string, files: string[]): Promise<void> {
   let entries;
+
   try {
     entries = await readdir(directory, { withFileTypes: true });
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
       return;
     }
+
     throw error;
   }
+
   for (const entry of entries) {
     const path = join(directory, entry.name);
+
     if (entry.isDirectory()) {
       await discover(path, files);
     } else if (entry.isFile() && entry.name.endsWith('.jsonl')) {
@@ -181,6 +202,7 @@ async function discover(directory: string, files: string[]): Promise<void> {
 /** Fingerprint bytes before a checkpoint to detect rewritten logs before resuming. */
 async function anchor(path: string, offset: number): Promise<string> {
   const handle = await open(path, 'r');
+
   try {
     const length = Math.min(offset, 1024);
     const buffer = Buffer.alloc(length);

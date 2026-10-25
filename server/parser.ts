@@ -48,6 +48,7 @@ function object(value: unknown): JsonObject {
   if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
     return value as JsonObject;
   }
+
   return {};
 }
 
@@ -72,9 +73,11 @@ function readTokens(value: unknown): TokenUsage | null {
   if (!isTokenCount(input) || !isTokenCount(output) || !isTokenCount(cached) || !isTokenCount(write)) {
     return null;
   }
+
   if (cached + write > input) {
     return null;
   }
+
   return { input, output, cached, write };
 }
 
@@ -91,6 +94,7 @@ function legacyUsage(previous: TokenUsage | null, total: TokenUsage, last: Token
   if (!previous) {
     return last ?? total;
   }
+
   const countersIncreased = total.input >= previous.input
     && total.output >= previous.output
     && total.cached >= previous.cached
@@ -99,6 +103,7 @@ function legacyUsage(previous: TokenUsage | null, total: TokenUsage, last: Token
   if (!countersIncreased) {
     return last;
   }
+
   return {
     input: total.input - previous.input,
     cached: total.cached - previous.cached,
@@ -112,12 +117,16 @@ function isMirror(previous: Observation, current: Observation): boolean {
   if (previous.mirrored || previous.kind === current.kind || !equalUsage(previous.usage, current.usage)) {
     return false;
   }
+
   if (previous.timestamp === current.timestamp) {
     return true;
   }
+
   if (previous.total && current.total) {
     return equalUsage(previous.total, current.total);
   }
+
+  // Without both cumulative totals, match only within the same turn and a short time window.
   return current.turn !== null
     && current.turn === previous.turn
     && Math.abs(current.timestamp - previous.timestamp) <= MIRROR_WINDOW_MS;
@@ -150,11 +159,13 @@ export function initialState(path: string): ParserState {
  */
 export function parseLine(line: string, state: ParserState): ParseResult {
   let row: JsonObject;
+
   try {
     row = object(JSON.parse(line));
   } catch {
     return { invalid: true };
   }
+
   const payload = object(row.payload);
 
   if (row.type === 'session_meta') {
@@ -165,67 +176,82 @@ export function parseLine(line: string, state: ParserState): ParseResult {
     state.forked = Boolean(payload.forked_from_id || payload.history_base);
     return {};
   }
+
   // Inherited context is still needed to interpret records owned by a subagent.
   if (row.type === 'turn_context') {
     state.model = nonEmptyString(payload.model) ?? state.model;
     state.turn = nonEmptyString(payload.turn_id);
     return {};
   }
+
   if (row.type === 'event_msg' && payload.type === 'thread_settings_applied') {
     const settings = object(payload.thread_settings);
     state.tier = nonEmptyString(settings.service_tier);
     state.model = nonEmptyString(settings.model) ?? state.model;
     return {};
   }
+
   if (typeof row.ordinal === 'number' && row.ordinal < state.boundary) {
     return {};
   }
 
   const ledger = row.type === 'token_usage_record';
   const legacy = row.type === 'event_msg' && payload.type === 'token_count';
+
   if (!ledger && !legacy) {
     return {};
   }
+
   if (ledger && nonEmptyString(payload.thread_id) && payload.thread_id !== state.session) {
     return {};
   }
 
   const timestamp = Date.parse(String(row.timestamp));
+
   if (!Number.isFinite(timestamp)) {
     return { invalid: true };
   }
+
   const info = object(payload.info);
   const total = readTokens(ledger ? payload.thread_token_usage : info.total_token_usage);
   const last = readTokens(ledger ? payload.usage : info.last_token_usage);
   let usage = last;
 
+  // Even ignored observations must advance cumulative state for the next usage delta.
   if (legacy && total) {
     const previous = state.previous;
     state.previous = total;
+
     if (previous && equalUsage(previous, total)) {
       return {};
     }
+
     // A fork's opening counters may include inherited history; only last-usage is owned.
     if (!previous && state.forked && (!last || last.input + last.output === 0)) {
       return {};
     }
+
     usage = legacyUsage(previous, total, last);
   }
+
   if (!usage || usage.cached + usage.write > usage.input) {
     return { invalid: true };
   }
+
   if (usage.input + usage.output === 0) {
     return {};
   }
 
   const response = nonEmptyString(payload.response_id);
   let id: string;
+
   if (ledger && response) {
     id = `response:${response}`;
   } else {
     const identity = JSON.stringify([state.session, timestamp, total ?? usage]);
     id = `legacy:${createHash('sha256').update(identity).digest('hex')}`;
   }
+
   const observation: Observation = {
     id,
     kind: ledger ? 'ledger' : 'legacy',
@@ -236,13 +262,18 @@ export function parseLine(line: string, state: ParserState): ParseResult {
     mirrored: false,
   };
   const match = state.observations.find(previous => isMirror(previous, observation));
+
+  // Ledger records replace legacy mirrors; later legacy mirrors add no usage.
   if (match) {
     match.mirrored = true;
+
     if (!ledger) {
       return {};
     }
+
     observation.mirrored = true;
   }
+
   state.observations.push(observation);
   state.observations = state.observations.slice(-MAX_OBSERVATIONS);
 

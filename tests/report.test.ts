@@ -8,6 +8,7 @@ import { fixture, header, ledger, line } from './fixtures.ts';
 
 test('reports include unknown-model tokens without treating them as free', async () => {
   const context = await fixture();
+
   try {
     await writeFile(context.file, header() + ledger()
       + line('turn_context', { model: 'unpublished-model' }) + ledger('unknown', '2026-10-24T17:00:00Z'));
@@ -30,6 +31,7 @@ test('reports include unknown-model tokens without treating them as free', async
 
 test('auto-review is free and previously unpriced history is corrected without its source logs', async () => {
   const context = await fixture();
+
   try {
     await writeFile(context.file, header() + line('turn_context', { model: 'codex-auto-review' }) + ledger('review'));
     await context.importer.refresh();
@@ -39,6 +41,7 @@ test('auto-review is free and previously unpriced history is corrected without i
     context.store.setMetadata('pricingVersion', '2026-10-25-v1');
     await rm(context.file);
     const reopened = new UsageStore(context.database);
+
     try {
       const result = report(reopened, 'all', context.importer.status, Date.parse('2026-10-24T23:00:00Z'));
       assert.equal(result.totals.tokens, 1100);
@@ -58,6 +61,7 @@ test('auto-review is free and previously unpriced history is corrected without i
 
 test('daily charts omit dates before retained usage and distinguish unpriced days from quiet days', async () => {
   const context = await fixture();
+
   try {
     await writeFile(context.file, header() + ledger('first', '2026-10-21T16:00:00Z')
       + line('turn_context', { model: 'unknown' }) + ledger('unpriced', '2026-10-23T16:00:00Z'));
@@ -79,6 +83,7 @@ test('daily charts omit dates before retained usage and distinguish unpriced day
 
 test('model and day groups count their own distinct sessions even when their keys match', async () => {
   const context = await fixture();
+
   try {
     const day = new Date(2026, 9, 24, 12);
     const model = '2026-10-24';
@@ -113,6 +118,7 @@ test('daily buckets follow local calendar days across the end of daylight saving
   const previousTimezone = process.env.TZ;
   process.env.TZ = 'America/Toronto';
   const context = await fixture();
+
   try {
     await writeFile(context.file, header()
       + ledger('first', '2026-10-31T12:00:00-04:00')
@@ -129,6 +135,7 @@ test('daily buckets follow local calendar days across the end of daylight saving
     assert.deepEqual(result.days.map(day => day.key), ['2026-11-01', '2026-10-31']);
   } finally {
     await context.close();
+
     if (previousTimezone === undefined) {
       delete process.env.TZ;
     } else {

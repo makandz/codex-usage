@@ -33,6 +33,7 @@ export function UsageBreakdown({ report, metric }: UsageBreakdownProps) {
   const [group, setGroup] = useState<Grouping>('model');
   const rows = [...(group === 'model' ? report.models : report.days)];
   const total = metric === 'cost' ? report.totals.cost : report.totals.tokens;
+
   if (group === 'model') {
     if (metric === 'cost') {
       rows.sort(compareCost);

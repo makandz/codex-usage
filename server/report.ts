@@ -26,6 +26,7 @@ function emptyTotals(): Totals {
 
 /** Count all tokens while restricting monetary totals to priced requests. */
 function addUsage(total: Totals, event: SavedEvent): void {
+  // Cached input is already included in recorded input; split it out without counting it twice.
   total.input += event.input - event.cached;
   total.cached += event.cached;
   total.output += event.output;
@@ -35,10 +36,12 @@ function addUsage(total: Totals, event: SavedEvent): void {
   if (event.tier === null) {
     total.assumedStandard++;
   }
+
   if (!event.price) {
     total.unpriced++;
     return;
   }
+
   total.inputCost += event.price.inputCost;
   total.cachedCost += event.price.cachedCost;
   total.outputCost += event.price.outputCost;
@@ -59,9 +62,11 @@ function rangeStart(range: Range, now: number): number {
   if (range === '24h') {
     return now - 24 * 60 * 60 * 1000;
   }
+
   if (range === 'all') {
     return 0;
   }
+
   const start = new Date(now);
   start.setHours(0, 0, 0, 0);
   start.setDate(start.getDate() - (Number.parseInt(range) - 1));
@@ -73,6 +78,7 @@ function bucketStart(timestamp: number, range: Range): number {
   if (range === '24h') {
     return Math.floor(timestamp / 3_600_000) * 3_600_000;
   }
+
   const date = new Date(timestamp);
   date.setHours(0, 0, 0, 0);
   return date.getTime();
@@ -85,20 +91,24 @@ function createSeries(first: number, now: number, range: Range): Map<number, Usa
 
   while (timestamp <= now) {
     series.set(timestamp, { timestamp, cost: 0, tokens: 0, unpriced: 0, requests: 0 });
+
     if (range === '24h') {
       timestamp += 3_600_000;
     } else {
+      // Calendar increments preserve local midnight across daylight-saving changes.
       const next = new Date(timestamp);
       next.setDate(next.getDate() + 1);
       timestamp = next.getTime();
     }
   }
+
   return series;
 }
 
 /** Aggregate one breakdown entry while counting its distinct sessions. */
 function addToGroup(groups: Map<string, BreakdownGroup>, key: string, event: SavedEvent): void {
   let group = groups.get(key);
+
   if (!group) {
     group = {
       totals: { key, label: key, ...emptyTotals(), sessions: 0 },
@@ -106,6 +116,7 @@ function addToGroup(groups: Map<string, BreakdownGroup>, key: string, event: Sav
     };
     groups.set(key, group);
   }
+
   addUsage(group.totals, event);
   group.sessions.add(event.session);
   group.totals.sessions = group.sessions.size;
@@ -139,6 +150,7 @@ export function report(store: UsageStore, range: Range, scan: ScanStatus, now = 
     const point = series.get(bucketStart(event.timestamp, range))!;
     point.tokens += event.input + event.output;
     point.requests++;
+
     if (event.price) {
       point.cost += event.price.inputCost + event.price.cachedCost + event.price.outputCost;
     } else {

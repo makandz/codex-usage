@@ -20,8 +20,11 @@ export function renderSnapshot(template: string, store: UsageStore, scan: ScanSt
   };
   // Log metadata must stay JSON, even if it contains an HTML closing tag.
   const json = JSON.stringify(reports).replaceAll('<', '\\u003c');
+
   if (!template.includes('__CODEX_USAGE_DATA__')) {
     throw new Error('Snapshot template is missing usage data.');
   }
+
+  // A callback keeps dollar sequences in log metadata literal during replacement.
   return template.replace('__CODEX_USAGE_DATA__', () => json);
 }

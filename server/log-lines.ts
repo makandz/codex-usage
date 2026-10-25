@@ -18,6 +18,7 @@ export async function* readLogLines(path: string, start: number, size: number): 
   if (start >= size) {
     return;
   }
+
   const stream = createReadStream(path, {
     start,
     end: size - 1,
@@ -27,6 +28,7 @@ export async function* readLogLines(path: string, start: number, size: number): 
   let pending = Buffer.alloc(0);
   let oversized = false;
 
+  // Only newline-terminated records advance the caller's checkpoint.
   for await (const data of stream) {
     const chunk = Buffer.isBuffer(data) ? data : Buffer.from(String(data));
     let lineStart = 0;
@@ -35,13 +37,16 @@ export async function* readLogLines(path: string, start: number, size: number): 
       if (chunk[index] !== 10) {
         continue;
       }
+
       const piece = chunk.subarray(lineStart, index);
       const bytes = pending.length + piece.length + 1;
       let text: string | null = null;
+
       if (!oversized && bytes <= MAX_LINE_BYTES) {
         const line = pending.length ? Buffer.concat([pending, piece]) : piece;
         text = line.toString('utf8');
       }
+
       offset += bytes;
       yield { text, offset };
       pending = Buffer.alloc(0);
@@ -50,15 +55,16 @@ export async function* readLogLines(path: string, start: number, size: number): 
     }
 
     pending = Buffer.concat([pending, chunk.subarray(lineStart)]);
+
+    // Discard oversized content while retaining its byte count for the next checkpoint.
     if (pending.length > MAX_LINE_BYTES) {
-      // Keep the byte count without retaining a potentially huge conversation/tool record.
       offset += pending.length;
       pending = Buffer.alloc(0);
       oversized = true;
     }
   }
 
-  // Ordinary unfinished lines remain unread at the saved checkpoint, including partial UTF-8.
+  // Roll back this file until the oversized record has a terminating newline.
   if (oversized) {
     throw new Error('An oversized unfinished log line will be retried next scan.');
   }
