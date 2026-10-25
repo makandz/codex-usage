@@ -15,7 +15,7 @@ let built = 0;
 try { built = Math.min((await stat('dist/index.html')).mtimeMs, (await stat('build/server/index.js')).mtimeMs); }
 catch { /* The first launch builds the app from installed dependencies. */ }
 const source = Math.max(...await Promise.all([
-  'src', 'server', 'shared', 'public', 'index.html', 'vite.config.ts', 'package.json', 'tsconfig.json', 'tsconfig.server.json',
+  'src', 'server', 'shared', 'public', 'scripts/build.mjs', 'index.html', 'vite.config.ts', 'package.json', 'tsconfig.json', 'tsconfig.server.json',
 ].map(modified)));
 if (source > built) {
   console.log('Building Codex Usage…');

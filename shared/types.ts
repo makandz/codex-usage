@@ -1,7 +1,7 @@
 export type Range = '24h' | '7d' | '30d' | '90d' | 'all';
 export type Metric = 'cost' | 'tokens';
 
-export interface Totals {
+export type Totals = {
   input: number;
   cached: number;
   output: number;
@@ -14,15 +14,15 @@ export interface Totals {
   requests: number;
   unpriced: number;
   assumedStandard: number;
-}
+};
 
-export interface Breakdown extends Totals {
+export type Breakdown = Totals & {
   key: string;
   label: string;
   sessions: number;
-}
+};
 
-export interface ScanStatus {
+export type ScanStatus = {
   scanning: boolean;
   scannedFiles: number;
   totalFiles: number;
@@ -31,9 +31,9 @@ export interface ScanStatus {
   lastScan: string | null;
   warnings: string[];
   error: string | null;
-}
+};
 
-export interface UsageReport {
+export type UsageReport = {
   totals: Totals;
   sessions: number;
   models: Breakdown[];
@@ -43,4 +43,6 @@ export interface UsageReport {
   timeZone: string;
   range: Range;
   retainedSessions: number;
-}
+};
+
+export type UsageSnapshot = Record<Range, UsageReport>;

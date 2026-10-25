@@ -7,17 +7,17 @@ import { PRICING_VERSION, priceUsage } from './pricing.ts';
 import type { Price } from './pricing.ts';
 
 type Row = Record<string, SQLOutputValue>;
-export interface SavedFile {
+export type SavedFile = {
   identity: string;
   mtime: number;
   size: number;
   offset: number;
   anchor: string;
   state: ParserState;
-}
-export interface SavedEvent extends UsageEvent {
+};
+export type SavedEvent = UsageEvent & {
   price: Price | null;
-}
+};
 
 export class UsageStore {
   readonly db: DatabaseSync;

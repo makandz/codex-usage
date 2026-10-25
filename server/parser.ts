@@ -22,14 +22,14 @@ function tokens(value: unknown): TokenUsage | null {
   return usage.cached + usage.write <= usage.input ? usage : null;
 }
 
-export interface UsageEvent extends TokenUsage {
+export type UsageEvent = TokenUsage & {
   id: string;
   session: string;
   timestamp: number;
   model: string;
   tier: string | null;
-}
-interface Observation {
+};
+type Observation = {
   id: string;
   kind: 'ledger' | 'legacy';
   timestamp: number;
@@ -37,8 +37,8 @@ interface Observation {
   usage: TokenUsage;
   total: TokenUsage | null;
   mirrored: boolean;
-}
-export interface ParserState {
+};
+export type ParserState = {
   version: number;
   session: string;
   model: string;
@@ -48,7 +48,7 @@ export interface ParserState {
   forked: boolean;
   previous: TokenUsage | null;
   observations: Observation[];
-}
+};
 export const PARSER_VERSION = 1;
 export function initialState(path: string): ParserState {
   return { version: PARSER_VERSION, session: path, model: 'unknown', tier: null, turn: null, boundary: 0, forked: false,
